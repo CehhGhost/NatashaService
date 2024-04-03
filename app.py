@@ -30,8 +30,14 @@ class SentenceSchema:
 
 @dataclass
 class DocumentSchema:
-    sentences: list[SentenceSchema]
 
+    sentences: list[SentenceSchema]
+@dataclass
+class LemmatizedTextSchema:
+    words: list[str]
+@dataclass
+class LematizedStringSchema:
+    lemmatized_string: str
 
 @app.post("/analyse")
 def analyse_document() -> dict:
@@ -61,6 +67,22 @@ def analyse_document() -> dict:
 
     return asdict(doc)
 
+@app.post("/lemmatize")
+def lemmatize_text() -> dict:
+    text = request.json.get("text")
+    if not text:
+        return {"error": "No text provided"}
+
+    natasha_doc = Doc(text)
+    natasha_doc.segment(_SEGMENTER)
+    natasha_doc.tag_morph(_MORPH_TAGGER)
+
+    line = LematizedStringSchema(lemmatized_string="")
+
+    for token in natasha_doc.tokens:
+        token.lemmatize(_MORPH_VOCAB)
+        line.lemmatized_string += token.lemma
+    return asdict(line)
 
 if __name__ == "__main__":
     app.run()
