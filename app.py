@@ -3,7 +3,6 @@ from dataclasses import dataclass, asdict
 from flask import Flask, request
 from natasha import Segmenter, Doc, MorphVocab, NewsEmbedding, NewsMorphTagger
 
-
 _SEGMENTER = Segmenter()
 _MORPH_VOCAB = MorphVocab()
 _EMB = NewsEmbedding()
@@ -30,14 +29,18 @@ class SentenceSchema:
 
 @dataclass
 class DocumentSchema:
-
     sentences: list[SentenceSchema]
+
+
 @dataclass
 class LemmatizedTextSchema:
     words: list[str]
+
+
 @dataclass
 class LematizedStringSchema:
     lemmatized_string: str
+
 
 @app.post("/analyse")
 def analyse_document() -> dict:
@@ -67,6 +70,7 @@ def analyse_document() -> dict:
 
     return asdict(doc)
 
+
 @app.post("/lemmatize")
 def lemmatize_text() -> dict:
     text = request.json.get("text")
@@ -81,8 +85,10 @@ def lemmatize_text() -> dict:
 
     for token in natasha_doc.tokens:
         token.lemmatize(_MORPH_VOCAB)
-        line.lemmatized_string += token.lemma
+        if token.pos != "PUNCT":
+            line.lemmatized_string += " " + token.lemma + " ";
     return asdict(line)
+
 
 if __name__ == "__main__":
     app.run()
